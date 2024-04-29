@@ -150,7 +150,7 @@ class TextEncoder:
     grouped_df : pandas DataFrame
         A DataFrame containing grouped encoded text lists based on the 'hadm_id' column.
     """
-    def __init__(self, relevant_cols, bins=None, Repetition_id=False, lab_id=False, labs_as_num=False, return_lists=False):
+    def __init__(self, relevant_cols, time_col,  bins=None, Repetition_id=False, lab_id=False, labs_as_num=False, return_lists=False):
         """
         Initializes the TextEncoder instance and generates a mapping of integers to letters.
         """
@@ -160,6 +160,7 @@ class TextEncoder:
         self.labs_as_num = labs_as_num
         self.return_lists = return_lists
         self.relevant_cols = relevant_cols
+        self.time_col = time_col
         
         if self.bins:
             # Generate letters for numbers from 0 to num_bins
@@ -240,8 +241,12 @@ class TextEncoder:
     def row_encode_func(self, row):
       encoded_text = ''
       for col in self.relevant_cols:
-        encoded_text += f' {col} '
-        encoded_text += ' '.join(str(self.scale_to_letter(x)) for x in row[col])
+        encoded_text += f'{col} '
+        # print(row[self.time_col])
+        # print(row[col])
+        # print("_______________________________________________________")
+        for idx in range(len(row[col])):
+            encoded_text += f"Time{self.scale_to_letter(row[self.time_col][idx])} {str(self.scale_to_letter(row[col][idx]))} "
       return encoded_text
       
    
@@ -266,7 +271,6 @@ class TextEncoder:
         grouped_df : pandas DataFrame
             A DataFrame containing grouped encoded text lists based on the 'hadm_id' column.
         """
-        print("called")
         if self.labs_as_num:
             if self.Repetition_id:
                 df['nstr'] = df[columns_to_scale].apply(
@@ -277,7 +281,6 @@ class TextEncoder:
                     lambda row: ' '.join(f'{val}' for col, val in zip(columns_to_scale, row)),
                     axis=1)
         else:
-            print("Else")
             if self.Repetition_id:
                 if self.lab_id:
                     df['nstr'] = df[columns_to_scale].apply(
@@ -294,7 +297,6 @@ class TextEncoder:
                         lambda row: ' '.join(f'{col}{self.scale_to_letter(val)}' for col, val in zip(columns_to_scale, row)),
                         axis=1)
                 else:
-                    print('using')
                     df['nstr'] = df.apply(self.row_encode_func, axis=1)
                     # df['nstr'] = df[columns_to_scale].apply(
                     #     lambda row: ' '.join(f'{self.scale_to_letter(val)}' for col, val in zip(columns_to_scale, row)),
